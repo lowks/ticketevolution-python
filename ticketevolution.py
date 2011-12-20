@@ -11,33 +11,78 @@ import urlparse
 import gzip
 import StringIO
 import hmac, hashlib, base64
+import json
 
 
 class Api(object):  
     def __init__(self,
                  client_token=None,
-                 client_secret=None):
+                 client_secret=None,
+                 sandbox=False):
 
         self.client_token = client_token
         self.client_secret = client_secret
 
-        self._default_params = {}
         self._urllib         = urllib2
         self._input_encoding = None
 
+        self.API_VERSION = 8
+
+        if sandbox:
+            self.BASE_URL = 'https://api.sandbox.ticketevolution.com'
+        else:
+            self.BASE_URL = 'https://api.ticketevolution.com'
+
+
+    def GetCategories(self,name=None,parent_id=None, per_page=None):
+        params = {}
+        if name: params['name'] = name
+        if parent_id: params['parent_id'] = parent_id
+        if per_page: params['per_page'] = per_page
+        
+        return self.get('/categories', params)
+
+    def GetCategory(self,category_id):
+        return self.get('/categories/%s' % category_id, parameters = {
+            'per_page':1
+        })
+
+    def get(self,path,parameters):
+        raw_response = self._FetchUrl(
+            path=path, 
+            http_method='GET',
+            parameters=parameters)
+        return json.loads(raw_response)
+
+    def post(self,path,json):
+        post_data = simplejson.dumps(json)
+        raw_response = self._FetchUrl(
+            path=path, 
+            http_method='POST',
+            post_data=post_data)
+        return json.loads(raw_response)
+
+    def put(self,path,json):
+        post_data = simplejson.dumps(json)
+        raw_response = self._FetchUrl(
+            path=path, 
+            http_method='PUT',
+            post_data=post_data)
+        return json.loads(raw_response)
+
+
     def _FetchUrl(self,
-                  url,
+                  path,
                   http_method = 'GET',
                   post_data=None,
-                  parameters=None):
+                  parameters={}):
         '''Fetch a URL, optionally caching for a specified time.
 
         Args:
-          url:
-            The full URL to retrieve
+          path:
+            The URL path to access, like /clients/123
           post_data:
-            A dict of (str, unicode) key/value pairs.
-            If set, POST will be used.
+            A unicode string to be used as the request body [Optional]
           parameters:
             A dict whose key/value pairs should encoded and added
             to the query string. [Optional]
@@ -45,12 +90,6 @@ class Api(object):
         Returns:
           A string containing the body of the response.
         '''
-        # Build the extra parameters dict
-        extra_params = {}
-        if self._default_params:
-            extra_params.update(self._default_params)
-        if parameters:
-            extra_params.update(parameters)
 
         http_handler  = self._urllib.HTTPHandler()
         https_handler = self._urllib.HTTPSHandler()
@@ -59,18 +98,15 @@ class Api(object):
         opener.add_handler(http_handler)
         opener.add_handler(https_handler)
 
-
-        url = self._BuildUrl(url, extra_params=extra_params)
-
-        # TODO: This will need to be changed to a JSON converter, or just 
-        # removed and take a JSON string
-        encoded_post_data = self._EncodePostData(post_data)
+        # Create the full URL with QS parameters
+        url = self.BASE_URL + path
+        url = self._BuildUrl(url, extra_params=parameters)
 
         print "URL: %s" % url
-        print "Post Data: %s" % encoded_post_data
+        print "Post Data: %s" % post_data
 
-        # Sign request here
-        signature = self._generate_signature(http_method, url, encoded_post_data)
+        # Sign request
+        signature = self._generate_signature(http_method, url, post_data)
         headers = {
             'Accept':"application/vnd.ticketevolution.api+json; version=8",
             'X-Signature':signature,
@@ -79,7 +115,7 @@ class Api(object):
         print headers
 
         # Open and return the URL immediately if we're not going to cache
-        request = self._urllib.Request(url,encoded_post_data,headers)
+        request = self._urllib.Request(url,post_data,headers)
         response = opener.open(request)
         url_data = self._DecompressGzippedResponse(response)
         opener.close()
@@ -146,26 +182,6 @@ class Api(object):
           return None
         else:
           return urllib.urlencode(dict([(k, self._Encode(v)) for k, v in parameters.items() if v is not None]))
-
-    def _EncodePostData(self, post_data):
-        '''Return a string in key=value&key=value form
-
-        Values are assumed to be encoded in the format specified by self._encoding,
-        and are subsequently URL encoded.
-
-        Args:
-          post_data:
-            A dict of (key, value) tuples, where value is encoded as
-            specified by self._encoding
-
-        Returns:
-          A URL-encoded string in "key=value&key=value" form
-        '''
-        if post_data is None:
-            return None
-        else:
-            return urllib.urlencode(dict([(k, self._Encode(v)) for k, v in post_data.items()]))
-
 
     def _DecompressGzippedResponse(self, response):
         raw_data = response.read()
