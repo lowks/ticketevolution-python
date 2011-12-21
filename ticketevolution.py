@@ -154,21 +154,28 @@ class Api(object):
 
     def _generate_signature(self,
                             http_method,
-                            url = None, 
+                            url, 
                             encoded_post_data = None):
         '''Creates a signature for the request using 
         either the URL for GET requests or the post data for other
         requests.
+
+        Args:
+            http_method:
+                GET, POST, PUT, DELETE
+            url:
+                Full URL we are accessing, including scheme and query string.
+            encoded_post_data:
+                If not a GET request, include the body data as a string. [Optional]
+
         '''
+        # Remove the 'https://' from the url
+        url_without_scheme = url.split("//",1)[1]
 
         if http_method == 'GET':
-            # Remove the 'https://' from the url
-            url_without_scheme = url.split("//",1)[1]
-
             request = "GET %s" % (url_without_scheme)
         else:
-            # Remove the 'https://' and everything after ?
-            url_without_scheme = url.split("//",1)[1]
+            # Use post data after "?" instead of query string
             host_and_path = url_without_scheme.split("?",1)[0]
             request = "%s %s?%s" % (http_method, host_and_path, encoded_post_data)
 
