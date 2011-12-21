@@ -20,15 +20,15 @@ class SigningTest(unittest.TestCase):
             sandbox = True,
         )
 
-    ## This won't work until we have the authenticator not automatically 
-    ## add question marks
-    # def testSignGetWithNoQuestionMark(self):
-    #     api = self.getApi()
+    # This won't work until we have the authenticator not automatically 
+    # add question marks
+    def testSignGetWithNoQuestionMark(self):
+        api = self.getApi()
 
-    #     signature = api._generate_signature(
-    #         http_method = "GET",
-    #         url = "https://api.sandbox.ticketevolution.com/clients")
-    #     self.assertEqual(signature, "CZ26dEtpFKkc21yjFK/FeFZ4Ak+9GLbdSQYKffbccd4=")
+        signature = api._generate_signature(
+            http_method = "GET",
+            url = "https://api.sandbox.ticketevolution.com/clients")
+        self.assertEqual(signature, "CZ26dEtpFKkc21yjFK/FeFZ4Ak+9GLbdSQYKffbccd4=")
     
     def testSignGetWithNoQueryParams(self):
         api = self.getApi()
@@ -52,6 +52,16 @@ class SigningTest(unittest.TestCase):
         signature = api._generate_signature(
             http_method = "GET",
             url = "https://api.sandbox.ticketevolution.com/clients?per_page=1&page_num=1")
+        self.assertEqual(signature, "rcqPKvZzaC98SDOLBTTj8k4qIkmdDwnIMjYIKFw+aVY=")
+
+
+    def testSignPost(self):
+        api = self.getApi()
+
+        signature = api._generate_signature(
+            http_method = "POST",
+            url = "https://api.sandbox.ticketevolution.com/clients",
+            encoded_post_data = '{"clients": [{"name": "Will Smith"}]}')
         self.assertEqual(signature, "rcqPKvZzaC98SDOLBTTj8k4qIkmdDwnIMjYIKFw+aVY=")
 
 

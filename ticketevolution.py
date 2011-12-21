@@ -173,7 +173,14 @@ class Api(object):
         url_without_scheme = url.split("//",1)[1]
 
         if http_method == 'GET':
-            request = "GET %s" % (url_without_scheme)
+            to_sign = url_without_scheme
+
+            # Due to bug in API auth, make sure it has a question mark
+            # even if there's no query string params
+            if not "?" in url_without_scheme:
+                to_sign += "?"
+            
+            request = "GET %s" % (to_sign)
         else:
             # Use post data after "?" instead of query string
             host_and_path = url_without_scheme.split("?",1)[0]
