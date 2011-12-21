@@ -11,7 +11,37 @@ import urlparse
 import gzip
 import StringIO
 import hmac, hashlib, base64
+import re
 import json
+
+class get_call(object):
+    def __init__(self,path,param_names = []):
+        self.path = path
+        self.path_param_names = re.findall(":([a-zA-Z_]+)",path)
+        self.param_names = param_names
+
+    def __call__(self,func):
+        def new_func(*args,**kwargs):
+            parameters = {}
+            path = self.path
+            for param_name in self.path_param_names:
+                # Replace :tokens in the endpoint with passed in args
+                token = ":%s" % param_name
+                value = str(kwargs[param_name])
+                path = path.replace(token,value)
+                del kwargs[param_name]
+
+            for param_name in self.param_names:
+                # Create dict of qs params from passed in args
+                # that are also allowed param names 
+                if param_name in kwargs:
+                    parameters[param_name] = kwargs[param_name]
+                    del kwargs[param_name]
+                
+            kwargs['parameters'] = parameters
+            kwargs['path'] = path
+            return func(*args, **kwargs)
+        return new_func
 
 
 class Api(object):  
@@ -33,19 +63,17 @@ class Api(object):
         else:
             self.BASE_URL = 'https://api.ticketevolution.com'
 
+    @get_call('/categories',['name','parent_id','per_page','page_num'])
+    def GetCategories(self,path, parameters):
+        return self.get(path, parameters)
+    
+    @get_call('/categories/:category_id')
+    def GetCategory(self,path,parameters):
+        return self.get(path,parameters)
 
-    def GetCategories(self,name=None,parent_id=None, per_page=None):
-        params = {}
-        if name: params['name'] = name
-        if parent_id: params['parent_id'] = parent_id
-        if per_page: params['per_page'] = per_page
-        
-        return self.get('/categories', params)
-
-    def GetCategory(self,category_id):
-        return self.get('/categories/%s' % category_id, parameters = {
-            'per_page':1
-        })
+    @get_call('/clients/:client_id/addresses',['name'])
+    def GetAddresses(self,path, parameters):
+        return self.get(path, parameters)
 
     def get(self,path,parameters):
         raw_response = self._FetchUrl(
@@ -146,6 +174,8 @@ class Api(object):
             key=self.client_secret,
             msg=request,
         ).digest()
+
+        print "Signing: " + request
 
         encoded_signature = base64.b64encode(signature)
         return encoded_signature
