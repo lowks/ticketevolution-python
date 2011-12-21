@@ -136,7 +136,7 @@ class Api(object):
         # Sign request
         signature = self._generate_signature(http_method, url, post_data)
         headers = {
-            'Accept':"application/vnd.ticketevolution.api+json; version=8",
+            'Accept':"application/vnd.ticketevolution.api+json; version=%s" % self.API_VERSION,
             'X-Signature':signature,
             'X-Token':self.client_token,
         }
