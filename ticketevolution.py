@@ -82,16 +82,16 @@ class Api(object):
             parameters=parameters)
         return json.loads(raw_response)
 
-    def post(self,path,json):
-        post_data = simplejson.dumps(json)
+    def post(self,path,body):
+        post_data = json.dumps(body)
         raw_response = self._FetchUrl(
             path=path, 
             http_method='POST',
             post_data=post_data)
         return json.loads(raw_response)
 
-    def put(self,path,json):
-        post_data = simplejson.dumps(json)
+    def put(self,path,body):
+        post_data = json.dumps(body)
         raw_response = self._FetchUrl(
             path=path, 
             http_method='PUT',
@@ -167,7 +167,10 @@ class Api(object):
 
             request = "GET %s" % (url_without_scheme)
         else:
-            request = encoded_post_data
+            # Remove the 'https://' and everything after ?
+            url_without_scheme = url.split("//",1)[1]
+            host_and_path = url_without_scheme.split("?",1)[0]
+            request = "%s %s?%s" % (http_method, host_and_path, encoded_post_data)
 
         signature = hmac.new(
             digestmod=hashlib.sha256,
