@@ -44,11 +44,60 @@ class get_call(object):
         return new_func
 
 
-class Api(object):  
+class Api(object):
+    '''An object containing methods for making requests against
+    the ticket evolution exchange API.
+
+    Example usage:
+
+      To create an API object with your credentials:
+
+        >>> import ticketevolution
+        >>> api = ticketevolution.Api(client_token = "abc",
+                                      client_secret = "xyz")
+
+      To make a GET request:
+        
+        >>> result = api.get('/categories')
+        >>> print [c['name'] for c in result['categories']]
+
+      To make a GET request with parameters:
+
+        >>> result = api.get('/categories', parameters = {
+                'per_page':5
+                'page_num':1
+            })
+        >>> print [c['name'] for c in result['categories']]
+      
+      Making a POST request to create a new client
+
+        >>> result = api.get('/clients', body = {
+                "clients": [{
+                    "name":"Will Smith"    
+                }]
+            })
+        >>> print [c['id'] for c in result['clients']]
+
+    '''
     def __init__(self,
-                 client_token=None,
-                 client_secret=None,
+                 client_token,
+                 client_secret,
                  sandbox=False):
+        '''Instantiate a new ticketevolution.Api object.
+
+        Args:
+          client_token:
+            Your api auth token.
+          client_secret:
+            Your api secret key.
+          sandbox:
+            If set to true, use api.sandbox.ticketevolution.com which
+            can be used for testing out queries.  
+            Note that this is not a good solution for writing tests, since 
+            the sandbox is still subject to rate limits. Instead, in your 
+            tests, use a mock Api object that doesn't actually send out 
+            requests.  [Optional]
+        '''
 
         self.client_token = client_token
         self.client_secret = client_secret
@@ -63,26 +112,46 @@ class Api(object):
         else:
             self.BASE_URL = 'https://api.ticketevolution.com'
 
-    @get_call('/categories',['name','parent_id','per_page','page_num'])
-    def GetCategories(self,path, parameters):
-        return self.get(path, parameters)
-    
-    @get_call('/categories/:category_id')
-    def GetCategory(self,path,parameters):
-        return self.get(path,parameters)
+    # # Example of how you could do a more meaningful method.
+    # # Putting this off for a later version
+    # @get_call('/clients/:client_id/addresses',['name','per_page'])
+    # def GetAddresses(self,path, parameters):
+    #     return self.get(path, parameters)
 
-    @get_call('/clients/:client_id/addresses',['name'])
-    def GetAddresses(self,path, parameters):
-        return self.get(path, parameters)
+    def get(self,path,parameters = {}):
+        '''Make a GET request against the API.
 
-    def get(self,path,parameters):
+        Args:
+          path:
+            The URL path to access, like /clients/123, not including
+            query string parameters.
+          parameters:
+            A dict whose key/value pairs should encoded and added
+            to the query string. [Optional]
+
+        Returns:
+          A dict of the JSON response.
+        '''
         raw_response = self._FetchUrl(
             path=path, 
             http_method='GET',
             parameters=parameters)
         return json.loads(raw_response)
 
-    def post(self,path,body):
+    def post(self,path,body = {}):
+        '''Make a POST request against the API.
+
+        Args:
+          path:
+            The URL path to access, like /clients/123, not including
+            query string parameters.
+          body:
+            A dict or list to be converted to a JSON string and 
+            used in the body of the request. [Optional]
+
+        Returns:
+          A dict of the JSON response.
+        '''
         post_data = json.dumps(body)
         raw_response = self._FetchUrl(
             path=path, 
@@ -91,6 +160,19 @@ class Api(object):
         return json.loads(raw_response)
 
     def put(self,path,body):
+        '''Make a PUT request against the API.
+
+        Args:
+          path:
+            The URL path to access, like /clients/123, not including
+            query string parameters.
+          body:
+            A dict or list to be converted to a JSON string and 
+            used in the body of the request. [Optional]
+
+        Returns:
+          A dict of the JSON response.
+        '''
         post_data = json.dumps(body)
         raw_response = self._FetchUrl(
             path=path, 
