@@ -14,6 +14,20 @@ import hmac, hashlib, base64
 import re
 import json
 
+try:
+  # Python >= 2.6
+  import json
+except ImportError:
+  try:
+    # Python < 2.6
+    import simplejson as json
+  except ImportError:
+    try:
+      # Google App Engine
+      from django.utils import simplejson as json
+    except ImportError:
+      raise ImportError, "Unable to load a json library"
+
 class get_call(object):
     def __init__(self,path,param_names = []):
         self.path = path
