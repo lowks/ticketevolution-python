@@ -69,7 +69,8 @@ class Api(object):
                  client_token,
                  client_secret,
                  sandbox=False,
-                 debug=False):
+                 debug=False,
+                 alt_urllib=None):
         '''Instantiate a new ticketevolution.Api object.
 
         Args:
@@ -89,7 +90,7 @@ class Api(object):
         self.client_token = client_token
         self.client_secret = client_secret
 
-        self._urllib         = urllib2
+        self._urllib         = alt_urllib or urllib2
         self._input_encoding = None
 
         self.API_VERSION = 8
