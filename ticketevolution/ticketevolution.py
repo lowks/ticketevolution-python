@@ -301,9 +301,16 @@ class Api(object):
             A URL-encoded string in "key=value&key=value" form
         '''
         if parameters is None:
-          return None
+            return None
         else:
-          return urllib.urlencode(dict([(k, self._Encode(v)) for k, v in parameters.items() if v is not None]))
+            # UTF encode any query string vars
+            encoded = [(k, self._Encode(v)) for k, v in parameters.items() if v is not None]
+
+            # Sort the params to satisfy the old authenticator
+            sorted_params = sorted(encoded)
+
+            # Pass back the sorted, url-encoded string
+            return urllib.urlencode(sorted_params)
 
     def _DecompressGzippedResponse(self, response):
         raw_data = response.read()
@@ -314,7 +321,7 @@ class Api(object):
         return url_data
 
     def _BuildUrl(self, url, path_elements=None, extra_params=None):
-        # Break url into consituent parts
+        # Break url into parts
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
 
         # Add any additional path elements to the path
@@ -334,7 +341,7 @@ class Api(object):
             else:
                 query = extra_query
 
-        # Return the rebuilt URL
+        # Put it back together
         return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
 
     def log(self,message):

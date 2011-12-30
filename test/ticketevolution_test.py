@@ -55,7 +55,7 @@ class SigningTest(unittest.TestCase):
         signature = api._generate_signature(
             http_method = "GET",
             url = "https://api.sandbox.ticketevolution.com/clients?per_page=1&page_num=1")
-        self.assertEqual(signature, "rcqPKvZzaC98SDOLBTTj8k4qIkmdDwnIMjYIKFw+aVY=")
+        self.assertEqual(signature, "PIzIqixgOwy8XFrxFbqxM9vL9iyoifpV4VjgWHD2naE=")
 
 
     def testSignPost(self):
@@ -65,7 +65,7 @@ class SigningTest(unittest.TestCase):
             http_method = "POST",
             url = "https://api.sandbox.ticketevolution.com/clients",
             encoded_post_data = '{"clients": [{"name": "Will Smith"}]}')
-        self.assertEqual(signature, "rcqPKvZzaC98SDOLBTTj8k4qIkmdDwnIMjYIKFw+aVY=")
+        self.assertEqual(signature, "YvU94mY7jmk1eOu26M4pkl64lK1PkQskZznMhL82IaY=")
 
 
 
