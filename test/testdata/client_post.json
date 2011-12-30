@@ -1,0 +1,19 @@
+{
+  "clients": [
+    {
+      "name": "Mister Rogers",
+      "email_addresses": [
+
+      ],
+      "addresses": [
+
+      ],
+      "updated_at": "2011-10-05T15:08:31Z",
+      "url": "/clients/1026",
+      "id": "1026",
+      "phone_numbers": [
+
+      ]
+    }
+  ]
+}

@@ -81,14 +81,39 @@ class ApiTest(unittest.TestCase):
 
     def testGetCall(self):
         self.mock_urllib.AddFileHandler(
-          '/categories?per_page=3',
-          'categories.json')
+          url = '/categories?per_page=3',
+          filename = 'categories.json',
+          method = 'GET')
 
         result = self.api.get('/categories',{
           'per_page':'3'
         })
         self.assertEqual(len(result['categories']),3)
 
+
+    def testPostCall(self):
+        self.mock_urllib.AddFileHandler(
+            url = '/clients',
+            filename = 'client_post.json',
+            method = 'POST')
+
+        result = self.api.post('/clients', body = {
+            "name":"Mister Rogers"
+        })
+
+        self.assertEqual(len(result["clients"]),1)
+
+    def testPutCall(self):
+        self.mock_urllib.AddFileHandler(
+            url = '/clients/123',
+            filename = 'client_put.json',
+            method = 'PUT')
+
+        result = self.api.put('/clients/123', body = {
+            "name":"Ms Rogers"
+        })
+
+        self.assertEqual(len(result["clients"]),1)
 
     
 
@@ -100,12 +125,12 @@ class MockUrllib(object):
   def __init__(self):
       self._handlers = {}
 
-  def AddHandler(self, url, callback):
+  def AddHandler(self, url, callback, method="GET"):
       '''When urllib calls `url`, then use the string result of calling 
       `callback` as the response data'''
-      self._handlers[url] = callback
+      self._handlers[(url,method)] = callback
 
-  def AddFileHandler(self, url, filename):
+  def AddFileHandler(self, url, filename, method="GET"):
       '''When urllib calls `url`, use the contents of `filename` as the
       data in the returned response object.
 
@@ -125,7 +150,7 @@ class MockUrllib(object):
               resp_data = open(full_path).read(),
           )
 
-      self.AddHandler(url,response_object_from_file)
+      self.AddHandler(url,response_object_from_file, method)
 
   def build_opener(self, *handlers):
       return MockOpener(self._handlers)
@@ -162,6 +187,7 @@ class MockOpener(object):
   def open(self, request):
     url = request.url
     data = request.data
+    method = request.get_method()
 
     # Only use the path and querystring as the key to the response map
     path_and_querystring = url.split("//",1)[1]
@@ -170,11 +196,11 @@ class MockOpener(object):
     if self._opened:
       raise Exception('MockOpener already opened.')
 
-    if path_and_querystring in self._handlers:
+    if (path_and_querystring,method) in self._handlers:
       self._opened = True
-      return self._handlers[path_and_querystring]()
+      return self._handlers[(path_and_querystring,method)]()
     else:
-      raise Exception('Unexpected URL %s (Checked: %s)' % (path_and_querystring, self._handlers))
+      raise Exception('Unexpected %s request for URL %s (Checked: %s)' % (method, path_and_querystring, self._handlers))
 
   def add_handler(self, *args, **kwargs):
       pass
