@@ -68,7 +68,8 @@ class Api(object):
     def __init__(self,
                  client_token,
                  client_secret,
-                 sandbox=False):
+                 sandbox=False,
+                 debug=False):
         '''Instantiate a new ticketevolution.Api object.
 
         Args:
@@ -97,6 +98,8 @@ class Api(object):
             self.BASE_URL = 'https://api.sandbox.ticketevolution.com'
         else:
             self.BASE_URL = 'https://api.ticketevolution.com'
+
+        self.debug = debug
 
     # # Example of how you could do a more meaningful method.
     # # Putting this off for a later version
@@ -198,8 +201,8 @@ class Api(object):
         url = self.BASE_URL + path
         url = self._BuildUrl(url, extra_params=parameters)
 
-        print "URL: %s" % url
-        print "Post Data: %s" % post_data
+        self.log("URL: %s" % url)
+        self.log("Post Data: %s" % post_data)
 
         # Sign request
         signature = self._generate_signature(http_method, url, post_data)
@@ -208,7 +211,7 @@ class Api(object):
             'X-Signature':signature,
             'X-Token':self.client_token,
         }
-        print headers
+        self.log(headers)
 
         # Open and return the URL immediately if we're not going to cache
         request = self._urllib.Request(url,post_data,headers)
@@ -260,7 +263,7 @@ class Api(object):
             msg=request,
         ).digest()
 
-        print "Signing: " + request
+        self.log("Signing: " + request)
 
         encoded_signature = base64.b64encode(signature)
         return encoded_signature
@@ -329,3 +332,7 @@ class Api(object):
 
         # Return the rebuilt URL
         return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
+
+    def log(self,message):
+        if self.debug:
+            print message
