@@ -140,7 +140,6 @@ class MockUrllib(object):
       return self.build_opener()
 
   def Request(self,url = "",data = None,headers = {}):
-      MockRequest = collections.namedtuple('MockRequest',['url','data','headers'])
       req = MockRequest(url=url,data=data,headers=headers)
       return req
 
@@ -184,6 +183,15 @@ class MockOpener(object):
     if not self._opened:
       raise Exception('MockOpener closed before it was opened.')
     self._opened = False
+
+class MockRequest(object):
+    def __init__(self, url, data=None, headers = {}):
+        self.url = url
+        self.data = data
+        self.headers = headers
+
+        # To do PUT and DELETE requests, urllib2 needs you to monkeypatch this method.
+        self.get_method = lambda: 'GET'
 
 class MockResponse(object):
     '''Simulates parts of a urllib2 response object

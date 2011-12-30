@@ -214,13 +214,16 @@ class Api(object):
         }
         self.log(headers)
 
-        # Open and return the URL immediately if we're not going to cache
+        # Open the URL
         request = self._urllib.Request(url,post_data,headers)
+        request.get_method = lambda: http_method
         response = opener.open(request)
+
+        # Convert response object to string, decompressing if necessary
         url_data = self._DecompressGzippedResponse(response)
         opener.close()
 
-        # Always return the latest version
+        # Return response as json string
         return url_data
 
 
