@@ -59,7 +59,7 @@ To make a GET request with parameters:
 
 Making a POST request to create a new client
 
-    result = api.get('/clients', body = {
+    result = api.post('/clients', body = {
         "clients": [{
             "name":"Will Smith"    
         }]
